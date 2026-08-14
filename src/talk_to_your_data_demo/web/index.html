@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Talk to Your Data — Safe Public Demo</title>
+  <style>
+    :root { color-scheme: dark; --ink:#e8fff8; --muted:#93b9af; --line:#204b43; --mint:#5ef0c2; --blue:#70b7ff; --panel:#0c211d; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif; color:var(--ink); background:radial-gradient(circle at 15% 0%,#16493e 0,transparent 30rem),#06110f; }
+    main { width:min(1120px,92vw); margin:0 auto; padding:54px 0 80px; }
+    .eyebrow { color:var(--mint); font-weight:750; letter-spacing:.12em; text-transform:uppercase; font-size:.78rem; }
+    h1 { max-width:850px; margin:.6rem 0 1rem; font-size:clamp(2.4rem,7vw,5rem); line-height:.98; letter-spacing:-.055em; }
+    .lead { max-width:760px; color:var(--muted); font-size:1.15rem; line-height:1.65; }
+    .trust { display:flex; flex-wrap:wrap; gap:.6rem; margin:1.4rem 0 2.4rem; }
+    .pill { padding:.55rem .8rem; border:1px solid var(--line); border-radius:999px; background:#0b1e1a; color:#b8d9d1; font-size:.86rem; }
+    .grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(300px,.7fr); gap:1rem; }
+    .card { border:1px solid var(--line); background:linear-gradient(180deg,rgba(16,45,39,.94),rgba(8,25,21,.96)); border-radius:20px; padding:1.15rem; box-shadow:0 22px 70px rgba(0,0,0,.25); }
+    label { display:block; margin-bottom:.55rem; font-weight:700; }
+    textarea { width:100%; min-height:110px; resize:vertical; border:1px solid #2c675c; border-radius:14px; padding:1rem; background:#061411; color:var(--ink); font:inherit; line-height:1.5; }
+    textarea:focus { outline:2px solid var(--mint); outline-offset:2px; }
+    button { border:0; border-radius:12px; padding:.8rem 1rem; background:var(--mint); color:#042019; font-weight:800; cursor:pointer; }
+    button:disabled { opacity:.55; cursor:wait; }
+    .examples { display:flex; flex-wrap:wrap; gap:.55rem; margin:.8rem 0 1rem; }
+    .example { background:#12352e; color:#c9eee4; border:1px solid #286357; padding:.55rem .7rem; font-size:.78rem; }
+    .status { color:var(--muted); min-height:1.5rem; margin:.9rem 0 0; }
+    pre { white-space:pre-wrap; word-break:break-word; border:1px solid #1e4a42; background:#04100e; padding:1rem; border-radius:14px; color:#b9f8e5; font-size:.82rem; line-height:1.5; max-height:390px; overflow:auto; }
+    .summary { font-size:1.08rem; line-height:1.55; color:#d6fff4; }
+    .meta { color:var(--muted); font-size:.84rem; }
+    .table-wrap { margin-top:1rem; overflow:auto; border:1px solid var(--line); border-radius:14px; }
+    table { width:100%; border-collapse:collapse; font-size:.88rem; }
+    th,td { padding:.72rem .8rem; text-align:left; border-bottom:1px solid #183c35; white-space:nowrap; }
+    th { color:var(--mint); background:#0c2a24; position:sticky; top:0; }
+    tr:last-child td { border-bottom:0; }
+    .hidden { display:none; }
+    footer { margin-top:2rem; color:var(--muted); line-height:1.6; }
+    footer a { color:var(--mint); }
+    @media (max-width:820px) { .grid { grid-template-columns:1fr; } main { padding-top:32px; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Free • Local • Synthetic</div>
+  <h1>Ask a business question. Inspect the exact SQL.</h1>
+  <p class="lead">A zero-secret public demo of a production-minded data assistant: bounded natural-language questions, deterministic planning, fail-closed SQL checks and read-only execution over reproducible synthetic data.</p>
+  <div class="trust">
+    <span class="pill">0 external APIs</span><span class="pill">0 credentials</span><span class="pill">720 fake orders</span><span class="pill">200-row hard cap</span><span class="pill">Loopback-only web UI</span>
+  </div>
+
+  <section class="grid">
+    <div class="card">
+      <label for="question">What would you like to know?</label>
+      <textarea id="question">Show monthly revenue by region</textarea>
+      <div id="examples" class="examples"></div>
+      <button id="ask" type="button">Generate &amp; run safely</button>
+      <p id="status" class="status">Ready. Every result comes from synthetic data.</p>
+      <div id="result" class="hidden">
+        <h2>Result</h2>
+        <p id="summary" class="summary"></p>
+        <p id="meta" class="meta"></p>
+        <div class="table-wrap"><table><thead id="head"></thead><tbody id="body"></tbody></table></div>
+      </div>
+    </div>
+    <aside class="card">
+      <div class="eyebrow">Execution contract</div>
+      <h2>Exact SQL</h2>
+      <p class="meta">Shown after policy validation and returned with every response.</p>
+      <pre id="sql">Choose a supported question to see the validated SQL.</pre>
+      <h3>Why this plan?</h3>
+      <p id="rationale" class="meta">The demo maps a bounded question catalog to reviewed query templates.</p>
+    </aside>
+  </section>
+
+  <footer>
+    This public edition is intentionally narrow. It does not connect to a real database or LLM. Need private metadata connectors, governed SQL generation, evaluation and enterprise deployment? Open a GitHub issue without secrets or client artefacts.
+  </footer>
+</main>
+<script>
+  const question = document.getElementById('question');
+  const ask = document.getElementById('ask');
+  const status = document.getElementById('status');
+  const result = document.getElementById('result');
+  const summary = document.getElementById('summary');
+  const meta = document.getElementById('meta');
+  const sql = document.getElementById('sql');
+  const rationale = document.getElementById('rationale');
+  const head = document.getElementById('head');
+  const body = document.getElementById('body');
+  const examples = document.getElementById('examples');
+
+  function cell(tag, value) { const node=document.createElement(tag); node.textContent=String(value); return node; }
+  function renderTable(columns, rows) {
+    head.replaceChildren(); body.replaceChildren();
+    const headerRow=document.createElement('tr'); columns.forEach(value=>headerRow.appendChild(cell('th', value))); head.appendChild(headerRow);
+    rows.forEach(row=>{ const tr=document.createElement('tr'); row.forEach(value=>tr.appendChild(cell('td', value))); body.appendChild(tr); });
+  }
+  async function loadQuestions() {
+    const response=await fetch('/api/questions'); const payload=await response.json();
+    payload.questions.forEach(text=>{ const button=document.createElement('button'); button.type='button'; button.className='example'; button.textContent=text; button.addEventListener('click',()=>{question.value=text;}); examples.appendChild(button); });
+  }
+  ask.addEventListener('click', async ()=>{
+    ask.disabled=true; result.classList.add('hidden'); status.textContent='Validating the plan and running read-only SQL…';
+    try {
+      const response=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:question.value})});
+      const payload=await response.json(); if(!response.ok) throw new Error(payload.message || payload.error || 'Request failed');
+      summary.textContent=payload.summary; meta.textContent=`${payload.rows.length} rows • ${payload.elapsed_ms} ms • ${payload.synthetic_source_rows} synthetic source rows`;
+      sql.textContent=payload.plan.sql; rationale.textContent=payload.plan.rationale; renderTable(payload.columns,payload.rows); result.classList.remove('hidden'); status.textContent='Completed safely.';
+    } catch(error) { status.textContent=error instanceof Error ? error.message : 'Request failed'; }
+    finally { ask.disabled=false; }
+  });
+  loadQuestions().catch(()=>{status.textContent='Could not load the local question catalog.';});
+</script>
+</body>
+</html>
